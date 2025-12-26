@@ -9,27 +9,24 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { memoryStorage } from 'multer';
 import { UploadsService } from './uploads.service';
-import { v4 as uuidv4 } from 'uuid';
+import { S3Service } from './s3.service';
 
 @Controller('api/uploads')
 export class UploadsController {
-  constructor(private readonly uploadsService: UploadsService) {}
+  constructor(
+    private readonly uploadsService: UploadsService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   @Post()
   @UseInterceptors(
     FileInterceptor('photo', {
-      storage: diskStorage({
-        destination: './public/uploads',
-        filename: (req, file, cb) => {
-          const uniqueName = `${uuidv4()}${extname(file.originalname)}`;
-          cb(null, uniqueName);
-        },
-      }),
+      storage: memoryStorage(),
       fileFilter: (req, file, cb) => {
         // Only validate if file is provided
         if (file && !file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
@@ -49,7 +46,18 @@ export class UploadsController {
     @UploadedFile() file?: Express.Multer.File,
     @Body('message') message?: string,
   ) {
-    const photoUrl = file ? `/uploads/${file.filename}` : undefined;
+    let photoUrl: string | undefined;
+
+    if (file) {
+      try {
+        // Upload to S3
+        photoUrl = await this.s3Service.uploadFile(file);
+      } catch (error: any) {
+        throw new InternalServerErrorException(
+          error.message || 'Failed to upload file to S3',
+        );
+      }
+    }
 
     if (!photoUrl && !message?.trim()) {
       throw new BadRequestException(

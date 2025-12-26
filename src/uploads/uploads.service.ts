@@ -2,13 +2,13 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Upload, UploadDocument, UploadStatus } from '../schemas/upload.schema';
-import * as fs from 'fs';
-import * as path from 'path';
+import { S3Service } from './s3.service';
 
 @Injectable()
 export class UploadsService {
   constructor(
     @InjectModel(Upload.name) private uploadModel: Model<UploadDocument>,
+    private readonly s3Service: S3Service,
   ) {}
 
   async create(
@@ -85,16 +85,9 @@ export class UploadsService {
   async delete(id: string): Promise<void> {
     const upload = await this.findOne(id);
 
-    // Delete file if exists
+    // Delete file from S3 if exists
     if (upload.photoUrl) {
-      const filePath = path.join(
-        process.cwd(),
-        'public',
-        path.basename(upload.photoUrl),
-      );
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
+      await this.s3Service.deleteFile(upload.photoUrl);
     }
 
     await this.uploadModel.findByIdAndDelete(id).exec();
