@@ -9,10 +9,12 @@ export class S3Service {
   private s3Client: S3Client;
   private bucketName: string;
   private region: string;
+  private cloudFrontDomain: string;
 
   constructor(private configService: ConfigService) {
     this.region = this.configService.get<string>('AWS_REGION') || 'us-east-1';
     this.bucketName = this.configService.get<string>('AWS_S3_BUCKET_NAME') || '';
+    this.cloudFrontDomain = this.configService.get<string>('CLOUDFRONT_DOMAIN') || '';
 
     const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
     const secretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY');
@@ -51,10 +53,11 @@ export class S3Service {
     try {
       await this.s3Client.send(command);
 
-      // Return the public URL
-      // Handle different S3 URL formats based on region
+      // Return CloudFront URL if configured, otherwise return S3 URL
       let publicUrl: string;
-      if (this.region === 'us-east-1') {
+      if (this.cloudFrontDomain) {
+        publicUrl = `https://${this.cloudFrontDomain}/${key}`;
+      } else if (this.region === 'us-east-1') {
         // us-east-1 uses a different URL format
         publicUrl = `https://${this.bucketName}.s3.amazonaws.com/${key}`;
       } else {
