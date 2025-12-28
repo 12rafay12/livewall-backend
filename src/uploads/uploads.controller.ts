@@ -84,16 +84,31 @@ export class UploadsController {
   }
 
   @Get()
-  async findAll(@Query('status') status?: string) {
-    const uploads = await this.uploadsService.findAll(status);
-    return uploads.map((upload) => ({
-      id: upload._id.toString(),
-      photoUrl: upload.photoUrl,
-      message: upload.message,
-      status: upload.status,
-      createdAt: upload.createdAt,
-      displayed: upload.displayed,
-    }));
+  async findAll(
+    @Query('status') status?: string,
+    @Query('displayed') displayed?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 20;
+
+    const result = await this.uploadsService.findAll(status, displayed, pageNum, limitNum);
+
+    return {
+      uploads: result.uploads.map((upload) => ({
+        id: upload._id.toString(),
+        photoUrl: upload.photoUrl,
+        message: upload.message,
+        status: upload.status,
+        createdAt: upload.createdAt,
+        displayed: upload.displayed,
+      })),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: Math.ceil(result.total / result.limit),
+    };
   }
 
   @Get(':id')

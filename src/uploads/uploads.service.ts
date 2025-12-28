@@ -61,9 +61,33 @@ export class UploadsService {
     return uploads;
   }
 
-  async findAll(status?: string): Promise<UploadDocument[]> {
-    const query = status ? { status: status.toUpperCase() } : {};
-    return this.uploadModel.find(query).sort({ createdAt: -1 }).exec();
+  async findAll(
+    status?: string,
+    displayed?: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{ uploads: UploadDocument[]; total: number; page: number; limit: number }> {
+    const query: any = {};
+
+    if (status) {
+      query.status = status.toUpperCase();
+    }
+
+    if (displayed === 'displayed') {
+      query.displayed = true;
+    } else if (displayed === 'not-displayed') {
+      query.displayed = false;
+    }
+
+    const total = await this.uploadModel.countDocuments(query).exec();
+    const uploads = await this.uploadModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .exec();
+
+    return { uploads, total, page, limit };
   }
 
   async findOne(id: string): Promise<UploadDocument> {
