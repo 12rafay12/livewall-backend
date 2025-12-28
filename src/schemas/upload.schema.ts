@@ -29,6 +29,9 @@ export class Upload {
   @Prop({ default: false })
   displayed: boolean;
 
+  @Prop({ type: Date, required: false })
+  scheduledFor?: Date;
+
   @Prop({ type: Types.ObjectId, ref: 'User', required: false })
   uploadedBy?: Types.ObjectId;
 

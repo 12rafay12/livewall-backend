@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Param,
   Body,
   Query,
@@ -103,6 +104,7 @@ export class UploadsController {
         status: upload.status,
         createdAt: upload.createdAt,
         displayed: upload.displayed,
+        scheduledFor: upload.scheduledFor,
       })),
       total: result.total,
       page: result.page,
@@ -128,12 +130,14 @@ export class UploadsController {
   async updateStatus(
     @Param('id') id: string,
     @Body('action') action: 'approve' | 'reject' | 'schedule',
+    @Body('scheduledFor') scheduledFor?: string,
   ) {
     if (!['approve', 'reject', 'schedule'].includes(action)) {
       throw new BadRequestException('Invalid action. Must be approve, reject, or schedule');
     }
 
-    const upload = await this.uploadsService.updateStatus(id, action);
+    const scheduledDate = scheduledFor ? new Date(scheduledFor) : undefined;
+    const upload = await this.uploadsService.updateStatus(id, action, scheduledDate);
     return {
       id: upload._id.toString(),
       photoUrl: upload.photoUrl,
@@ -141,6 +145,7 @@ export class UploadsController {
       status: upload.status,
       createdAt: upload.createdAt,
       displayed: upload.displayed,
+      scheduledFor: upload.scheduledFor,
     };
   }
 
@@ -204,6 +209,33 @@ export class UploadsController {
     } catch (error: any) {
       throw new InternalServerErrorException(
         error.message || 'Failed to upload files',
+      );
+    }
+  }
+
+  @Patch(':id/displayed')
+  async markAsDisplayed(@Param('id') id: string) {
+    try {
+      const upload = await this.uploadsService.markAsDisplayed(id);
+      return {
+        id: upload._id.toString(),
+        displayed: upload.displayed,
+      };
+    } catch (error: any) {
+      throw new InternalServerErrorException(
+        error.message || 'Failed to mark upload as displayed',
+      );
+    }
+  }
+
+  @Delete(':id')
+  async delete(@Param('id') id: string) {
+    try {
+      await this.uploadsService.delete(id);
+      return { message: 'Upload deleted successfully' };
+    } catch (error: any) {
+      throw new InternalServerErrorException(
+        error.message || 'Failed to delete upload',
       );
     }
   }

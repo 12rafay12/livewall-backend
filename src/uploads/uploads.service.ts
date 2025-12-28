@@ -67,6 +67,21 @@ export class UploadsService {
     page: number = 1,
     limit: number = 20,
   ): Promise<{ uploads: UploadDocument[]; total: number; page: number; limit: number }> {
+    // Auto-activate scheduled uploads that have reached their scheduled time
+    const now = new Date();
+    await this.uploadModel
+      .updateMany(
+        {
+          status: UploadStatus.SCHEDULED,
+          scheduledFor: { $lte: now },
+        },
+        {
+          status: UploadStatus.APPROVED,
+          $unset: { scheduledFor: '' },
+        },
+      )
+      .exec();
+
     const query: any = {};
 
     if (status) {
@@ -101,18 +116,22 @@ export class UploadsService {
   async updateStatus(
     id: string,
     action: 'approve' | 'reject' | 'schedule',
+    scheduledFor?: Date,
   ): Promise<UploadDocument> {
     const upload = await this.findOne(id);
 
     switch (action) {
       case 'approve':
         upload.status = UploadStatus.APPROVED;
+        upload.scheduledFor = undefined; // Clear scheduled time when approved
         break;
       case 'reject':
         upload.status = UploadStatus.REJECTED;
+        upload.scheduledFor = undefined; // Clear scheduled time when rejected
         break;
       case 'schedule':
         upload.status = UploadStatus.SCHEDULED;
+        upload.scheduledFor = scheduledFor || new Date(); // Use provided time or current time
         break;
     }
 
@@ -141,6 +160,12 @@ export class UploadsService {
       .exec();
 
     return { modifiedCount: result.modifiedCount };
+  }
+
+  async markAsDisplayed(id: string): Promise<UploadDocument> {
+    const upload = await this.findOne(id);
+    upload.displayed = true;
+    return upload.save();
   }
 
   async delete(id: string): Promise<void> {
