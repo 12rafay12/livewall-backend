@@ -3,6 +3,11 @@ import { Document } from 'mongoose';
 
 export type UserDocument = User & Document;
 
+export enum UserRole {
+  PHOTOGRAPHER = 'photographer',
+  ADMIN = 'admin',
+}
+
 @Schema({ timestamps: true })
 export class User {
   @Prop({ unique: true, required: true })
@@ -14,8 +19,8 @@ export class User {
   @Prop({ default: true })
   isActive: boolean;
 
-  @Prop({ default: 'photographer' })
-  role: string;
+  @Prop({ type: String, enum: UserRole, default: UserRole.PHOTOGRAPHER })
+  role: UserRole;
 
   createdAt?: Date;
   updatedAt?: Date;
