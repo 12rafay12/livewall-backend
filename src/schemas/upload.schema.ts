@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type UploadDocument = Upload & Document;
 
@@ -28,6 +28,12 @@ export class Upload {
 
   @Prop({ default: false })
   displayed: boolean;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: false })
+  uploadedBy?: Types.ObjectId;
+
+  @Prop({ type: String, enum: ['public', 'photographer'], default: 'public' })
+  uploadSource?: string;
 
   createdAt?: Date;
   updatedAt?: Date;

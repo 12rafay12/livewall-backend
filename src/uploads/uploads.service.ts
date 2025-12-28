@@ -14,14 +14,51 @@ export class UploadsService {
   async create(
     photoUrl?: string,
     message?: string,
+    uploadedBy?: string,
+    uploadSource?: string,
   ): Promise<UploadDocument> {
     const upload = new this.uploadModel({
       photoUrl,
       message,
       status: UploadStatus.PENDING,
       displayed: false,
+      uploadedBy: uploadedBy || undefined,
+      uploadSource: uploadSource || 'public',
     });
     return upload.save();
+  }
+
+  async createBatch(
+    files: Express.Multer.File[],
+    message?: string,
+    uploadedBy?: string,
+  ): Promise<UploadDocument[]> {
+    const uploads: UploadDocument[] = [];
+
+    for (const file of files) {
+      try {
+        // Upload file to S3
+        const photoUrl = await this.s3Service.uploadFile(file);
+
+        // Create upload record
+        const upload = new this.uploadModel({
+          photoUrl,
+          message,
+          status: UploadStatus.PENDING,
+          displayed: false,
+          uploadedBy: uploadedBy || undefined,
+          uploadSource: 'photographer',
+        });
+
+        const savedUpload = await upload.save();
+        uploads.push(savedUpload);
+      } catch (error) {
+        // Log error but continue with other files
+        console.error(`Failed to upload file ${file.originalname}:`, error);
+      }
+    }
+
+    return uploads;
   }
 
   async findAll(status?: string): Promise<UploadDocument[]> {
