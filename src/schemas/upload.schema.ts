@@ -18,6 +18,12 @@ export class Upload {
   @Prop({ required: false })
   message?: string;
 
+  @Prop({ required: false })
+  username?: string;
+
+  @Prop({ required: false })
+  email?: string;
+
   @Prop({
     type: String,
     enum: UploadStatus,

@@ -47,6 +47,8 @@ export class UploadsController {
   async create(
     @UploadedFile() file?: Express.Multer.File,
     @Body('message') message?: string,
+    @Body('username') username?: string,
+    @Body('email') email?: string,
     @Body('uploadedBy') uploadedBy?: string,
     @Body('uploadSource') uploadSource?: string,
   ) {
@@ -72,6 +74,8 @@ export class UploadsController {
     const upload = await this.uploadsService.create(
       photoUrl,
       message?.trim(),
+      username?.trim(),
+      email?.trim(),
       uploadedBy,
       uploadSource,
     );
@@ -79,6 +83,8 @@ export class UploadsController {
       id: upload._id.toString(),
       photoUrl: upload.photoUrl,
       message: upload.message,
+      username: upload.username,
+      email: upload.email,
       status: upload.status,
       createdAt: upload.createdAt,
     };
@@ -101,6 +107,8 @@ export class UploadsController {
         id: upload._id.toString(),
         photoUrl: upload.photoUrl,
         message: upload.message,
+        username: upload.username,
+        email: upload.email,
         status: upload.status,
         createdAt: upload.createdAt,
         displayed: upload.displayed,
@@ -120,6 +128,8 @@ export class UploadsController {
       id: upload._id.toString(),
       photoUrl: upload.photoUrl,
       message: upload.message,
+      username: upload.username,
+      email: upload.email,
       status: upload.status,
       createdAt: upload.createdAt,
       displayed: upload.displayed,
@@ -142,6 +152,8 @@ export class UploadsController {
       id: upload._id.toString(),
       photoUrl: upload.photoUrl,
       message: upload.message,
+      username: upload.username,
+      email: upload.email,
       status: upload.status,
       createdAt: upload.createdAt,
       displayed: upload.displayed,

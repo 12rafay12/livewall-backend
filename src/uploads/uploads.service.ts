@@ -14,12 +14,16 @@ export class UploadsService {
   async create(
     photoUrl?: string,
     message?: string,
+    username?: string,
+    email?: string,
     uploadedBy?: string,
     uploadSource?: string,
   ): Promise<UploadDocument> {
     const upload = new this.uploadModel({
       photoUrl,
       message,
+      username,
+      email,
       status: UploadStatus.PENDING,
       displayed: false,
       uploadedBy: uploadedBy || undefined,
