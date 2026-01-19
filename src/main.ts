@@ -62,10 +62,19 @@ async function bootstrap() {
     mkdirSync(uploadsDir, { recursive: true });
   }
 
-  // Enable CORS
+  // Enable CORS - Allow all origins
   app.enableCors({
-    origin: true,
-    credentials: true,
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'Origin',
+      'X-Requested-With',
+    ],
+    exposedHeaders: ['Content-Type', 'Authorization'],
+    credentials: false, // Must be false when origin is '*'
   });
 
   // Serve static files from public directory
@@ -78,4 +87,4 @@ async function bootstrap() {
   const protocol = httpsOptions ? 'https' : 'http';
   console.log(`Application is running on: ${protocol}://localhost:${port}`);
 }
-bootstrap();
+void bootstrap();
